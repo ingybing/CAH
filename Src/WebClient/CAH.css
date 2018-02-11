@@ -1,0 +1,124 @@
+﻿body 
+{
+    background-color:black;
+    color:white;
+    font-family:Helvetica, Arial, sans-serif;
+    display:none;
+}
+
+h1{
+    font-size:20pt;
+    text-align:center;
+}
+
+.centered
+{
+    text-align:center;
+}
+
+.panel
+{
+    border:1px solid white;
+    margin:50px;
+    padding:30px;
+    border-radius:5px;
+    display: inline-block;
+    width:400px;
+    text-align:center;
+}
+
+.button
+{
+    border:1px solid white;
+    padding:10px;
+    border-radius:5px;
+    display: inline-block;
+    cursor:pointer;
+}
+
+.button-disabled
+{
+    border:1px solid dimgrey;
+    padding:10px;
+    border-radius:5px;
+    display: inline-block;
+    color:dimgrey;
+}
+
+.button:hover
+{
+    border:1px solid black;
+    padding:10px;
+    border-radius:5px;
+    display:inline-block;
+    cursor:pointer;
+    color:black;
+    background-color:white;
+}
+
+.scoreboard
+{
+    float:left;
+    border:1px solid white;
+    border-radius:20px;
+    padding:20px;
+    margin:10px;
+    background-color:black;
+    text-align:left;
+}
+
+.blackCard
+{
+    border:1px solid white;
+    border-radius:20px;
+    padding:20px;
+    margin:10px;
+    width:150px;
+    height:250px;
+    display:inline-block;
+    background-color:black;
+    text-align:left;
+}
+
+.whiteCard
+{
+    border:1px solid darkgrey;
+    border-radius:20px;
+    padding:20px;
+    margin:10px;
+    width:150px;
+    height:250px;
+    display:inline-block;
+    background-color:white;
+    text-align:left;
+    color:black;
+    cursor:pointer;
+    position:relative;
+}
+
+.whiteCard:hover
+{
+    border:1px solid lightgrey;
+    color:grey;
+}
+
+.cardOrder
+{
+    position:absolute;
+    top:-15px;
+    right:-15px;
+    background-color:red;
+    color:#fff;
+    padding:5px;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    border-radius: 30px;
+    width:30px;
+    height:30px;
+    text-align:center;
+}
+
+.cardOrder div 
+{
+    margin-top:6px;
+}

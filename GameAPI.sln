@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameAPI", "Src\GameAPI\GameAPI.csproj", "{732EFD73-08C6-4C60-A46A-0169EDAB888A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccess", "Src\DataAccess\DataAccess.csproj", "{52515896-2490-496F-9560-19617F9DEB59}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{732EFD73-08C6-4C60-A46A-0169EDAB888A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{732EFD73-08C6-4C60-A46A-0169EDAB888A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{732EFD73-08C6-4C60-A46A-0169EDAB888A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{732EFD73-08C6-4C60-A46A-0169EDAB888A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52515896-2490-496F-9560-19617F9DEB59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52515896-2490-496F-9560-19617F9DEB59}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52515896-2490-496F-9560-19617F9DEB59}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52515896-2490-496F-9560-19617F9DEB59}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

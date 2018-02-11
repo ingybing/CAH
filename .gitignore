@@ -1,0 +1,7 @@
+.suo
+*.log
+/MongoDb/Data/**
+**/bin/**
+**/obj/**
+*.csproj.user
+/packages/**

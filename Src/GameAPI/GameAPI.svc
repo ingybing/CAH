@@ -1,0 +1,1 @@
+﻿<%@ ServiceHost Language="C#" Debug="true" Service="CardsAgainstHumantiy.Api.GameAPI" CodeBehind="GameAPI.svc.cs" %>
