@@ -21,7 +21,14 @@ namespace CardsAgainstHumanity.DataAccess
 
         public void ImportCards(string[] lines, CardType cardType)
         {
-            var cards = lines.Select(x => new Card { Type = cardType, Text = x, PlayerHandId = null, LastSeen = null });
+            var cards = lines.Select(x => new Card
+            {
+                Type = cardType,
+                Text = cardType == CardType.White ? x : x.Split('^')[1],
+                Pick = cardType == CardType.White ? 0 : int.Parse(x.Split('^')[0]),
+                PlayerHandId = null,
+                LastSeen = null
+            });
 
             var collectionName = string.Format("{0}Card", cardType.ToString());
 

@@ -16,17 +16,6 @@ h1{
     text-align:center;
 }
 
-.panel
-{
-    border:1px solid white;
-    margin:50px;
-    padding:30px;
-    border-radius:5px;
-    display: inline-block;
-    width:400px;
-    text-align:center;
-}
-
 .button
 {
     border:1px solid white;
@@ -56,13 +45,27 @@ h1{
     background-color:white;
 }
 
+.panel
+{
+    border:1px solid white;
+    margin:50px;
+    padding:30px;
+    border-radius:5px;
+    display: inline-block;
+    width:400px;
+    text-align:center;
+    float:unset;
+}
+
 .scoreboard
 {
     float:left;
+    display:inline-block;
     border:1px solid white;
     border-radius:20px;
     padding:20px;
     margin:10px;
+    width:200px;
     background-color:black;
     text-align:left;
 }
@@ -75,9 +78,18 @@ h1{
     margin:10px;
     width:150px;
     height:250px;
-    display:inline-block;
+    display:inline-flex;
     background-color:black;
     text-align:left;
+    position:relative;
+    left:-125px;
+}
+
+.whiteCards
+{
+    width:1250px;
+    display:inline-flex;
+    vertical-align:top;
 }
 
 .whiteCard
@@ -118,7 +130,7 @@ h1{
     text-align:center;
 }
 
-.cardOrder div 
+.cardOrderNumber 
 {
     margin-top:6px;
 }

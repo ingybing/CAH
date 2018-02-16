@@ -9,9 +9,13 @@
         <link href="CAH.css" rel="stylesheet" />
         <script src="jquery-3.3.1.min.js"></script>
         <script src="notify.min.js"></script>
+        <script src="Cookie.js"></script>
         <script>
 
             var playerDetails;
+            var pick = 0;
+            var cardsPicked = 0;
+            var selectedCards = new Array();
 
             $(document).ready(function ()
             {
@@ -21,6 +25,8 @@
                 $("#addNewPlayer").hide();
                 $("#scoreboard").hide();
                 $("#tsar").hide();
+
+                $(".whiteCard").click(whiteCardClicked);
 
                 $("body").show();
 
@@ -181,10 +187,7 @@
                     })
                     .done(function (data) {
                         $.notify("Got a black card", "success");
-
-                        var blackCard = $("#blackCard");
-                        blackCard.html(data.Text);
-                        blackCard.show();
+                        setBlackCard(data);
                     })
                     .fail(function () {
                         $.notify("Failed to draws black card.", "error");
@@ -201,14 +204,20 @@
                     })
                     .done(function (data) {
                         $.notify("Got a black card", "success");
-
-                        var blackCard = $("#blackCard");
-                        blackCard.html(data.Text);
-                        blackCard.show();
+                        setBlackCard(data);
                     })
                     .fail(function () {
                         $.notify("Failed to get black card.", "error");
                     });
+            }
+
+            function setBlackCard(data)
+            {
+                var blackCard = $("#blackCard");
+                blackCard.html(data.Text);
+                blackCard.show();
+
+                self.pick = data.Pick;
             }
 
             function getWhiteCards()
@@ -245,36 +254,87 @@
                 }
             }
 
-            function setCookie(cname, cvalue, exdays) {
-                var d = new Date();
-                d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
-                var expires = "expires=" + d.toUTCString();
-                document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
-            }
-
-            function getCookie(cname) {
-                var name = cname + "=";
-                var decodedCookie = decodeURIComponent(document.cookie);
-                var ca = decodedCookie.split(';');
-                for (var i = 0; i < ca.length; i++) {
-                    var c = ca[i];
-                    while (c.charAt(0) == ' ') {
-                        c = c.substring(1);
-                    }
-                    if (c.indexOf(name) == 0) {
-                        return c.substring(name.length, c.length);
+            function whiteCardClicked(event)
+            {
+                var whiteCard = event.target;
+                var id = whiteCard.id;
+                var tag = whiteCard.getAttribute("tag");
+                var orderIndex = $.inArray(tag, self.selectedCards);
+                if (orderIndex == -1)
+                {
+                    // card isn't in the selected cards.
+                    var order = (self.cardsPicked + 1);
+                    if (order <= self.pick)
+                    {
+                        self.selectedCards[self.cardsPicked] = tag;
+                        whiteCard.innerHTML = whiteCard.innerHTML + "<div class=\"cardOrder\"><div class=\"cardOrderNumber\">" + order + "</div></div>";
+                        self.cardsPicked = order;
                     }
                 }
-                return "";
+                else
+                {
+                    // card is in the selected cards list so remove it and re-order.
+                    $(event.target).find("div").remove(); //remove bubble.
+                    var i = orderIndex;
+                    while((i+1) < self.selectedCards.length)
+                    {
+                        self.selectedCards[i] = self.selectedCards[i + 1];
+                        i++;
+                    }
+                    self.cardsPicked--;
+                    var numberOfSlotsToSplice = self.selectedCards.length - self.cardsPicked;
+                    self.selectedCards.splice(self.cardsPicked, numberOfSlotsToSplice);
+                    for(var i = 0; i < self.selectedCards.length; i++)
+                    {
+                        var tagIdToFind = self.selectedCards[i];
+                        var selector = ".whiteCard[tag=" + tagIdToFind + "]";
+                        var whiteCardMatchingTag = $(selector).find("div").find("div").html(i+1);
+                    }
+                }
+
+                var submitCardsButton = $("#submitCards");
+                if (self.selectedCards.length == self.pick) {
+                    enableButton(submitCardsButton, submitCards);
+                }
+                else {
+                    disableButton(submitCardsButton);
+                }
             }
 
+            function submitCards()
+            {
+                var submitCardsButton = $("#submitCards");
+                disableButton(submitCardsButton);
+
+                var data = { playerId : "" , cardId : [] };
+                data.playerId = self.playerDetails.Id;
+                data.cardId = self.selectedCards;
+
+                $.ajax(
+                {
+                    url: "../CahAPI/GameApi.svc/card/playCards",
+                    method: "POST",
+                    data: JSON.stringify(data)
+                })
+                .done(function (data) {
+                    disableButton(submitCardsButton);
+                    $.notify("Submitted Cards", "success");
+                    $.notify("Waiting for Tsar.", "info");
+
+                    $("#whiteCards").show();
+                })
+                .fail(function () {
+                    $.notify("Failed to submit cards.", "error");
+                    enableButton(submitCardsButton, submitCards);
+                });
+            }
         </script>
     </head>
     <body>
         <form id="form1" runat="server">
-        <h1>Cards Against Humanity.</h1>
+            <h1>Cards Against Humanity.</h1>
             <div class="centered">
-                <div class="button-disabled">Submit Cards</div>
+                <div class="button-disabled" id="submitCards">Submit Cards</div>
                 <div class="button-disabled">End Game</div>
             </div>
             <div class="centered">
@@ -289,36 +349,36 @@
                     Name: <input id="playerName" type="text" /><br /><br />
                     <div class="button" id="playerSubmit">Join Game</div>
                 </div>
-            </div>
-            <div class="centered">
                 <div class="blackCard" id="blackCard">
                     Batmans Guilty Pleasure Is __________
                 </div>
             </div>
             <div class="centered" id="whiteCards">
-                <div class="whiteCard" id="whiteCard1">
-                    Shitting on peoples laptop keyboard and then closing the lid.
-                    <div class="cardOrder" id="whiteCard1Order">1</div>
-                </div>
-                <div class="whiteCard" id="whiteCard2">
-                    Shitting on peoples laptop keyboard and then closing the lid.
-                    <div class="cardOrder" id="whiteCard2Order">2</div>
-                </div>
-                <div class="whiteCard" id="whiteCard3">
-                    Shitting on peoples laptop keyboard and then closing the lid.
-                    <div class="cardOrder" id="whiteCard3Order">3</div>
-                </div>
-                <div class="whiteCard" id="whiteCard4">
-                    Shitting on peoples laptop keyboard and then closing the lid.
-                    <div class="cardOrder" id="whiteCard4Order">4</div>
-                </div>
-                <div class="whiteCard" id="whiteCard5">
-                    Shitting on peoples laptop keyboard and then closing the lid.
-                    <div class="cardOrder" id="whiteCard5Order">5</div>
-                </div>
-                <div class="whiteCard" id="whiteCard6">
-                    Shitting on peoples laptop keyboard and then closing the lid.
-                    <div class="cardOrder" id="whiteCard6Order">6</div>
+                <div class="whiteCards">
+                    <div class="whiteCard" id="whiteCard1">
+                        Shitting on peoples laptop keyboard and then closing the lid.
+                        <div class="cardOrder" id="whiteCard1Order"><div class="cardOrderNumber">1</div></div>
+                    </div>
+                    <div class="whiteCard" id="whiteCard2">
+                        Shitting on peoples laptop keyboard and then closing the lid.
+                        <div class="cardOrder" id="whiteCard2Order"><div class="cardOrderNumber">2</div></div>
+                    </div>
+                    <div class="whiteCard" id="whiteCard3">
+                        Shitting on peoples laptop keyboard and then closing the lid.
+                        <div class="cardOrder" id="whiteCard3Order"><div class="cardOrderNumber">3</div></div>
+                    </div>
+                    <div class="whiteCard" id="whiteCard4">
+                        Shitting on peoples laptop keyboard and then closing the lid.
+                        <div class="cardOrder" id="whiteCard4Order"><div class="cardOrderNumber">4</div></div>
+                    </div>
+                    <div class="whiteCard" id="whiteCard5">
+                        Shitting on peoples laptop keyboard and then closing the lid.
+                        <div class="cardOrder" id="whiteCard5Order"><div class="cardOrderNumber">5</div></div>
+                    </div>
+                    <div class="whiteCard" id="whiteCard6">
+                        Shitting on peoples laptop keyboard and then closing the lid.
+                        <div class="cardOrder" id="whiteCard6Order"><div class="cardOrderNumber">6</div></div>
+                    </div>
                 </div>
             </div>
             <div id="tsar">

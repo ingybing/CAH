@@ -45,7 +45,7 @@ namespace CardsAgainstHumantiy.Api
         public CardContract DrawBlackCard(string playerId)
         {
             var card = storage.DrawBlackCard(new ObjectId(playerId));
-            return new CardContract { Id = card.Id.ToString(),  Text = card.Text };
+            return new CardContract { Id = card.Id.ToString(),  Text = card.Text, Pick = card.Pick };
         }
 
         public CardContract GetBlackCard()
@@ -53,7 +53,7 @@ namespace CardsAgainstHumantiy.Api
             var card = storage.GetBlackCard();
             if (card != null)
             {
-                return new CardContract { Id = card.Id.ToString(), Text = card.Text };
+                return new CardContract { Id = card.Id.ToString(), Text = card.Text, Pick = card.Pick };
             }
             return null;
         }
