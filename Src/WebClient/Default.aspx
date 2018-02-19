@@ -16,6 +16,8 @@
             var pick = 0;
             var cardsPicked = 0;
             var selectedCards = new Array();
+            var otherPlayers;
+            var alreadyGotWhiteCardsThisRound = false;
 
             $(document).ready(function ()
             {
@@ -123,7 +125,15 @@
                 setCookie("playerId", self.playerDetails.Id, 1);
 
                 $("#addNewPlayer").hide();
-                updateScoreboard(waitUntilAllPlayersJoin, isFromBrowserRefresh);
+
+                if (!isFromBrowserRefresh && self.playerDetails.IsTsar)
+                {
+                    drawBlackCard(function () { updateScoreboard(waitUntilAllPlayersJoin, isFromBrowserRefresh); });
+                }
+                else
+                {
+                    getBlackCard(function () { updateScoreboard(waitUntilAllPlayersJoin, isFromBrowserRefresh); });
+                }
             }
 
             function waitUntilAllPlayersJoin(players, isFromBrowserRefresh)
@@ -142,14 +152,7 @@
                 }
                 else
                 {
-                    if (!isFromBrowserRefresh && self.playerDetails.IsTsar) {
-                        drawBlackCard();
-                    }
-                    else {
-                        getBlackCard();
-                    }
-
-                    getWhiteCards();
+                    waitForAllPlayedCards();
                 }
             }
 
@@ -161,6 +164,7 @@
                         method: "GET",
                     })
                     .done(function (data) {
+                        self.otherPlayers = data;
                         var scoreboard = $("#scoreboard");
                         var html = "<u>Scoreboard:</u><br/><br/>";
                         for(i in data)
@@ -177,7 +181,7 @@
                     });
             }
 
-            function drawBlackCard()
+            function drawBlackCard(completedDelegate)
             {
                 $.notify("Drawing black card.", "info")
                 $.ajax(
@@ -188,13 +192,17 @@
                     .done(function (data) {
                         $.notify("Got a black card", "success");
                         setBlackCard(data);
+                        if(completedDelegate != undefined)
+                        {
+                            completedDelegate();
+                        }
                     })
                     .fail(function () {
                         $.notify("Failed to draws black card.", "error");
                     });
             }
 
-            function getBlackCard()
+            function getBlackCard(completedDelegate)
             {
                 $.notify("Getting black card.", "info")
                 $.ajax(
@@ -205,6 +213,10 @@
                     .done(function (data) {
                         $.notify("Got a black card", "success");
                         setBlackCard(data);
+                        if (completedDelegate != undefined)
+                        {
+                            completedDelegate();
+                        }
                     })
                     .fail(function () {
                         $.notify("Failed to get black card.", "error");
@@ -235,6 +247,8 @@
                         })
                         .done(function (data) {
                             $.notify("Got a white cards", "success");
+
+                            self.alreadyGotWhiteCardsThisRound = true;
 
                             for (i in data) {
                                 var currentIndex = parseInt(i);
@@ -306,7 +320,7 @@
                 var submitCardsButton = $("#submitCards");
                 disableButton(submitCardsButton);
 
-                var data = { playerId : "" , cardId : [] };
+                var data = { PlayerId : "" , CardId : [] };
                 data.playerId = self.playerDetails.Id;
                 data.cardId = self.selectedCards;
 
@@ -314,6 +328,7 @@
                 {
                     url: "../CahAPI/GameApi.svc/card/playCards",
                     method: "POST",
+                    contentType: "application/json; charset=UTF-8; charset-uf8",
                     data: JSON.stringify(data)
                 })
                 .done(function (data) {
@@ -326,6 +341,194 @@
                 .fail(function () {
                     $.notify("Failed to submit cards.", "error");
                     enableButton(submitCardsButton, submitCards);
+                });
+            }
+
+            function waitForAllPlayedCards()
+            {
+                getPlayedCards(function (cards)
+                {
+                    var uniquePlayersHands = new Array();
+                    var uniqueIndex = 0;
+                    for(var i in cards)
+                    {
+                        var card = cards[i];
+                        var playerId = card.PlayerHandId;
+                        if($.inArray(playerId, uniquePlayersHands) == -1)
+                        {
+                            uniquePlayersHands[uniqueIndex] = playerId;
+                            uniqueIndex++;
+                        }
+                    }
+
+                    if (!self.alreadyGotWhiteCardsThisRound && $.inArray(self.playerDetails.Id, uniquePlayersHands) == -1)
+                    {
+                        getWhiteCards();
+                    }
+                    
+                    if ($.inArray(self.playerDetails.Id, uniquePlayersHands) != -1)
+                    {
+                        $("#whiteCards").hide();
+                    }
+
+                    renderPlayedCards(cards);
+
+                    if(uniquePlayersHands.length != (self.otherPlayers.length - 1))
+                    {
+                        $.notify("Waiting for other players to play their hands.", "info");
+                        setTimeout(waitForAllPlayedCards, 10000);
+                    }
+                    else
+                    {
+                        $.notify("All players have played their hands", "info");
+                        if(!self.playerDetails.isTsar)
+                        {
+                            waitWhileRoundIsFinished();
+                        }
+                    }
+                });
+            }
+
+            function getPlayedCards(successDelegate)
+            {
+                $.notify("Fetching played cards.", "info");
+
+                $.ajax(
+                {
+                    url: "../CahAPI/GameApi.svc/cards/played",
+                    method: "GET"
+                })
+                .done(function (data)
+                {
+                    $.notify("Done Fetching Played Cards", "success");
+                    successDelegate(data);
+                })
+                .fail(function ()
+                {
+                    $.notify("Error fetching played cards", "error");
+                });
+            }
+
+            function getPlayerById(id)
+            {
+                for(var i in self.otherPlayers)
+                {
+                    var player = self.otherPlayers[i];
+                    if(player.Id == id)
+                    {
+                        return player;
+                    }
+                }
+
+                return undefined;
+            }
+
+            function renderPlayedCards(cards)
+            {
+                var playedCardsDiv = $("#playedCards");
+                playedCardsDiv.find("div").remove();
+
+                var currentPlayer;
+                var div;
+                var whiteCardsContainer;
+                for(var i in cards)
+                {
+                    var card = cards[i];
+                    if(currentPlayer != card.PlayerHandId)
+                    {
+                        currentPlayer = card.PlayerHandId;
+                        if(div != undefined)
+                        {
+                            div.append(whiteCardsContainer);
+                            playedCardsDiv.append(div);
+                        }
+
+                        whiteCardsContainer = $("<div></div>").addClass("whiteCards");
+                        div = $("<div></div>").attr("id", currentPlayer);
+                    }
+
+                    var whiteCard = $("<div></div>").addClass("whiteCard").html(card.Text).attr("tag", card.Id);
+                    if (self.playerDetails.IsTsar)
+                    {
+                        whiteCard.click(selectWinner);
+                    }
+
+                    whiteCardsContainer.append(whiteCard);
+                }
+
+                if (div != undefined)
+                {
+                    div.append(whiteCardsContainer);
+                    playedCardsDiv.append(div);
+                }
+            }
+
+            function selectWinner(event)
+            {
+                drawBlackCard(function ()
+                {
+                    var data = { tsar: self.playerDetails.Id, winner: event.target.getAttribute("tag") };
+
+                    $.ajax(
+                    {
+                        url: "../CahAPI/GameApi.svc/round/selectWinner",
+                        method: "POST",
+                        contentType: "application/json; charset=UTF-8; charset-uf8",
+                        data: JSON.stringify(data),
+                    })
+                    .done(function (data) {
+                        $.notify("Winner selected.", "success");
+                        getTsar(function () { updateScoreboard(waitUntilAllPlayersJoin, false); });
+                    })
+                    .fail(function () {
+                        $.notify("Error selecting winner.", "error");
+                    });
+                });
+            }
+
+            function getTsar(completedDelegate)
+            {
+                $.notify("Updating TSAR", "info");
+                $.ajax(
+                {
+                    url: "../CahAPI/GameApi.svc/player/tsar",
+                    method: "GET",
+                })
+                .done(function (data) {
+                    $.notify("Got Tsar.", "success");
+                    self.playerDetails.IsTsar = data.Id == self.playerDetails.Id;
+                    if (completedDelegate != undefined)
+                    {
+                        completedDelegate();
+                    }
+                })
+                .fail(function () {
+                    $.notify("Error getting Tsar.", "error");
+                });
+            }
+
+
+            function waitWhileRoundIsFinished() {
+                $.notify("Checking round is finished.", "info");
+                $.ajax(
+                {
+                    url: "../CahAPI/GameApi.svc/round/isFinished",
+                    method: "GET",
+                })
+                .done(function (isFinished) {
+                    if (isFinished)
+                    {
+                        $.notify("Rounds is finished, getting new cards.", "success");
+                        self.alreadyGotWhiteCardsThisRound = false;
+                        getTsar(function () { updateScoreboard(waitUntilAllPlayersJoin, false); });
+                    }
+                    else
+                    {
+                        setTimeout(waitWhileRoundIsFinished, 5000);
+                    }
+                })
+                .fail(function () {
+                    $.notify("Error checking if round is finished.", "error");
                 });
             }
         </script>
@@ -356,34 +559,29 @@
             <div class="centered" id="whiteCards">
                 <div class="whiteCards">
                     <div class="whiteCard" id="whiteCard1">
-                        Shitting on peoples laptop keyboard and then closing the lid.
-                        <div class="cardOrder" id="whiteCard1Order"><div class="cardOrderNumber">1</div></div>
+                        Card1
                     </div>
                     <div class="whiteCard" id="whiteCard2">
-                        Shitting on peoples laptop keyboard and then closing the lid.
-                        <div class="cardOrder" id="whiteCard2Order"><div class="cardOrderNumber">2</div></div>
+                        Card2
                     </div>
                     <div class="whiteCard" id="whiteCard3">
-                        Shitting on peoples laptop keyboard and then closing the lid.
-                        <div class="cardOrder" id="whiteCard3Order"><div class="cardOrderNumber">3</div></div>
+                        Card3
                     </div>
                     <div class="whiteCard" id="whiteCard4">
-                        Shitting on peoples laptop keyboard and then closing the lid.
-                        <div class="cardOrder" id="whiteCard4Order"><div class="cardOrderNumber">4</div></div>
+                        Card4
                     </div>
                     <div class="whiteCard" id="whiteCard5">
-                        Shitting on peoples laptop keyboard and then closing the lid.
-                        <div class="cardOrder" id="whiteCard5Order"><div class="cardOrderNumber">5</div></div>
+                        Card5
                     </div>
                     <div class="whiteCard" id="whiteCard6">
-                        Shitting on peoples laptop keyboard and then closing the lid.
-                        <div class="cardOrder" id="whiteCard6Order"><div class="cardOrderNumber">6</div></div>
+                        Card6
                     </div>
                 </div>
             </div>
             <div id="tsar">
                 <h1>You are the Tsar this round.</h1>
             </div>
+            <div id="playedCards"></div>
         </form>
     </body>
 </html>

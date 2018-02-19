@@ -89,7 +89,7 @@ namespace CardsAgainstHumanity.DataAccess
         public IList<Card> GetPlayedCards()
         {
             var whiteCards = this.db.GetCollection<Card>("WhiteCard");
-            return whiteCards.AsQueryable().Where(x => x.Played).ToList();
+            return whiteCards.AsQueryable().Where(x => x.Played).OrderBy(x => x.PlayerHandId).ThenBy(x => x.Order).ToList();
         }
 
         public Player GetPlayer(ObjectId id)
@@ -127,22 +127,35 @@ namespace CardsAgainstHumanity.DataAccess
             return cards;
         }
 
+        public bool IsRoundFinished()
+        {
+            var whiteCards = this.db.GetCollection<Card>("WhiteCard");
+            var haveAnyCardsBeenPlayed = whiteCards.AsQueryable().Any(x => x.Played);
+            return !haveAnyCardsBeenPlayed;
+        }
+
         public void PlayCard(ObjectId playerId, IList<ObjectId> cards)
         {
             var whiteCards = this.db.GetCollection<Card>("WhiteCard");
+            var order = 1;
             foreach (var cardId in cards)
             {
                 var whiteCard = whiteCards.AsQueryable().Single(x => x.PlayerHandId == playerId && x.Id == cardId);
 
                 var filter = Builders<Card>.Filter.Eq("Id", whiteCard.Id);
-                var update = Builders<Card>.Update.Set("Played", true);
+                var updatePlayed = Builders<Card>.Update.Set("Played", true);
+                var updateOrder = Builders<Card>.Update.Set("Order", order);
+                var update = Builders<Card>.Update.Combine(updatePlayed, updateOrder);
 
                 whiteCards.UpdateOne(filter, update);
+                order++;
             }
         }
 
         public IList<Card> GetWhiteCards(ObjectId playerId)
         {
+            const int CardsToDraw = 6;
+
             // Check and make sure the player isn't the Tsar.
             var players = this.db.GetCollection<Player>("Player");
             if(players.AsQueryable().Single(x=>x.Id == playerId).IsTsar)
@@ -155,12 +168,22 @@ namespace CardsAgainstHumanity.DataAccess
             var existingWhiteCardsInHand = whiteCards.AsQueryable().Where(x => x.PlayerHandId == playerId).ToList();
             if(existingWhiteCardsInHand.Any())
             {
+                var cardsInHand = existingWhiteCardsInHand.Count;
+                if (cardsInHand < CardsToDraw)
+                {
+                    var delta = CardsToDraw - cardsInHand;
+                    var deltaCards = this.DrawWhiteCards(whiteCards, delta, playerId);
+                    return existingWhiteCardsInHand.Union(deltaCards).ToList();
+                }
+
                 return existingWhiteCardsInHand;
             }
-
-            // If no cards, from the top 50 unseen cards pick 'n'.
-            var hand = this.DrawWhiteCards(whiteCards, 6, playerId);
-            return hand;
+            else
+            { 
+                // If no cards, from the top 50 unseen cards pick 'n'.
+                var hand = this.DrawWhiteCards(whiteCards, CardsToDraw, playerId);
+                return hand;
+            }
         }
 
         public IList<Player> GetPlayers()
@@ -196,11 +219,23 @@ namespace CardsAgainstHumanity.DataAccess
             { 
                 this.IncrementPlayerPoints(players, winningCard.PlayerHandId.Value);
                 this.SelectNextTsar(players, currentTsar);
+                this.ResetWhiteCardProperties(whiteCards);
             }
             else
             {
                 throw new Exception("You are not the current TSAR!");
             }
+        }
+
+        private void ResetWhiteCardProperties(IMongoCollection<Card> whiteCards)
+        {
+            var filter = Builders<Card>.Filter.Eq("Played", true);
+            var updatePlayed = Builders<Card>.Update.Set("Played", false);
+            var updateOrder = Builders<Card>.Update.Set("Order", 0);
+            var updatePlayerHandId = Builders<Card>.Update.Set<string>("PlayerHandId", null);
+            var update = Builders<Card>.Update.Combine(updatePlayed, updatePlayerHandId, updateOrder);
+
+            whiteCards.UpdateMany(filter, update);
         }
 
         private void SelectNextTsar(IMongoCollection<Player> players, Player currentTsar)

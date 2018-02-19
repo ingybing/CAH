@@ -1,0 +1,6 @@
+var conn = new Mongo("localhost:27017");
+var db = conn.getDB("CardsAgainstHumanity");
+ 
+db.Player.drop();
+db.WhiteCard.updateMany({_id:{$ne:null}}, {$set: {"PlayerHandId":null, LastSeen:null, Played:false, Order:0}});
+db.BlackCard.updateMany({_id:{$ne:null}}, {$set: {LastSeen:null}});

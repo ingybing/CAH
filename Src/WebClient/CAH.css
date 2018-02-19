@@ -23,6 +23,8 @@ h1{
     border-radius:5px;
     display: inline-block;
     cursor:pointer;
+    width:100px;
+    vertical-align:central;
 }
 
 .button-disabled

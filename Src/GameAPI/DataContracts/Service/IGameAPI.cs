@@ -56,5 +56,9 @@ namespace CardsAgainstHumantiy.Api.DataContracts.Service
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "game/end")]
         string EndGame();
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "round/isFinished")]
+        bool IsRoundFinished();
     }
 }

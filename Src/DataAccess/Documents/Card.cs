@@ -12,5 +12,6 @@ namespace CardsAgainstHumanity.DataAccess.Documents
         public int Pick { get; set; }
         public CardType Type { get; set; }
         public bool Played { get; set; }
+        public int Order { get; set; }
     }
 }

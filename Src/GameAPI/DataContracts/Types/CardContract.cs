@@ -15,6 +15,9 @@ namespace CardsAgainstHumantiy.Api.DataContracts.Types
         public string PlayerHandId { get; set; }
 
         [DataMember]
-        public int Pick { get; internal set; }
+        public int Pick { get; set; }
+
+        [DataMember]
+        public int Order { get; set; }
     }
 }

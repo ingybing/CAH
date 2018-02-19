@@ -95,13 +95,17 @@ namespace CardsAgainstHumantiy.Api
         public void SelectWinner(string tsar, string cardId)
         {
             this.storage.SelectWinner(new ObjectId(tsar), new ObjectId(cardId));
-            this.storage.NewGame();
         }
 
         public PlayerContract GetTsar()
         {
             var tsar = this.storage.GetTsar();
             return new PlayerContract { Id = tsar.Id.ToString(), Name = tsar.Name, Points = tsar.Points, IsTsar = tsar.IsTsar };
+        }
+
+        public bool IsRoundFinished()
+        {
+            return this.storage.IsRoundFinished();
         }
     }
 }
