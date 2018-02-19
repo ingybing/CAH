@@ -29,6 +29,7 @@ namespace CardsAgainstHumantiy.Api
         public String EndGame()
         {
             var winners = this.storage.GetWinner();
+            this.storage.ResetForNewGame();
 
             var names = string.Join(" & ", winners.Select(x => x.Name));
             var result = winners.Count > 1 ? string.Format("{0} are the winners with {1} points!", names, winners.First().Points) : string.Format("{0} is the winner with {1} points!", names, winners.First().Points);
@@ -61,7 +62,7 @@ namespace CardsAgainstHumantiy.Api
         public IList<CardContract> GetWhiteCards(string playerId)
         {
             var cards = storage.GetWhiteCards(new ObjectId(playerId));
-            var hand = cards.Select(x => new CardContract { Id = x.Id.ToString(), Text = x.Text }).ToList();
+            var hand = cards.Select(x => new CardContract { Id = x.Id.ToString(), Text = x.Text }).OrderBy(x => x.Text).ToList();
             return hand;
         }
 

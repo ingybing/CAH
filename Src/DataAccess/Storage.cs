@@ -54,7 +54,8 @@ namespace CardsAgainstHumanity.DataAccess
             }
 
             var blackCards = this.db.GetCollection<Card>("BlackCard");
-            var blackCard = blackCards.AsQueryable().OrderBy(x => x.LastSeen).Take(10).ToList().ElementAt(new Random().Next(10)-1);
+            var index = new Random().Next(9);
+            var blackCard = blackCards.AsQueryable().OrderBy(x => x.LastSeen).Take(10).ToList().ElementAt(index);
 
             var filter = Builders<Card>.Filter.Eq("Id", blackCard.Id);
             var update = Builders<Card>.Update.Set("LastSeen", DateTime.Now);
@@ -108,7 +109,7 @@ namespace CardsAgainstHumanity.DataAccess
 
             while (cards.Count < numberOfCardsToDraw)
             {
-                var index = random.Next(50) - 1;
+                var index = random.Next(49);
                 if (!previousIndexes.Contains(index))
                 {
                     previousIndexes.Add(index);
@@ -190,6 +191,22 @@ namespace CardsAgainstHumanity.DataAccess
         {
             var players = this.db.GetCollection<Player>("Player").AsQueryable().ToList();
             return players;
+        }
+
+        public void ResetForNewGame()
+        {
+            this.db.DropCollection("Player");
+
+            var whiteCards = this.db.GetCollection<Card>("WhiteCard");
+
+            var filter = Builders<Card>.Filter.Ne("PlayerHandId", BsonNull.Value);
+
+            var updatePlayerHandId = Builders<Card>.Update.Set("PlayerHandId", BsonNull.Value);
+            var updatePlayed = Builders<Card>.Update.Set("Played", false);
+            var updateOrder = Builders<Card>.Update.Set("Order", 0);
+            var update = Builders<Card>.Update.Combine(updatePlayerHandId, updatePlayed, updateOrder);
+
+            whiteCards.UpdateMany(filter, update);
         }
 
         public IList<Player> GetWinner()

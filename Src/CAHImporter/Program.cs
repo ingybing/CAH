@@ -26,7 +26,7 @@ namespace CardsAgainstHumanity.Importer
 
                 if (!blackListInfo.Exists)
                 {
-                    PrintNotFound("White List");
+                    PrintNotFound("Black List");
                 }
 
                 if(whiteListInfo.Exists && blackListInfo.Exists)
